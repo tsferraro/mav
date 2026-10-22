@@ -12,6 +12,8 @@
 html { background: #E9E4DA; }
 body { margin: 0; background: #E9E4DA; color: var(--tinta); font-family: Ubuntu, Calibri, "Segoe UI", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
 button { font: inherit; color: inherit; }
+/* um toque só: sem espera de duplo-toque para zoom no celular (PT22) */
+.app, .continuar, .nav button, .bt-opcao, .bt-grande, .bt-linha, .chip-beta, .bt-trocar { touch-action: manipulation; }
 .tela { max-width: 480px; min-height: 100vh; min-height: 100dvh; margin: 0 auto; background: var(--creme); display: flex; flex-direction: column; box-shadow: 0 0 24px rgba(27,42,38,.12); }
 [hidden] { display: none !important; }
 
