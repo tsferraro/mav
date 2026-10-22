@@ -55,6 +55,26 @@
     cena3: { src: 'img/cena-administrar.webp', w: 1536, h: 1024, alt: 'Vila, equipe reunida, placa de QR, quadro de agenda, trilha com bandeiras e medidor' }
   };
 
+  /* computador (≥ 1100 px, PT23): uma panorâmica por faixa, as cenas lado a lado — 6 colunas em «Para trabalhar» e
+     «Administrar», 3 em «Para aprender». Bordas das colunas medidas olhando cada imagem (prompts P*-panorama.md). */
+  function colunas(lista, xs) {
+    return lista.map(function (c, i) {
+      var n = {}; for (var k in c) n[k] = c[k];
+      n.x = xs[i]; n.w = xs[i + 1] - xs[i]; n.y = 0; n.h = 1; delete n.placaEsq;
+      n.empilha = !n.sub;   /* coluna estreita: o selo desce para baixo do nome, e as placas da faixa ficam da mesma altura */
+      return n;
+    });
+  }
+  var LARGO = {
+    cena1: { lista: colunas(B1, [0, .172, .340, .505, .670, .835, 1]),
+      img: { src: 'img/faixa-trabalhar.webp', w: 1672, h: 635, alt: IMG.cena1.alt, prio: true } },
+    cena2: { lista: colunas(B2, [0, 1 / 3, 2 / 3, 1]),
+      img: { src: 'img/faixa-aprender.webp', w: 1672, h: 635, alt: IMG.cena2.alt } },
+    cena3: { lista: colunas(B3, [0, .195, .360, .500, .665, .835, 1]),
+      img: { src: 'img/faixa-administrar.webp', w: 1672, h: 635, alt: IMG.cena3.alt } }
+  };
+  var mqLargo = window.matchMedia ? window.matchMedia('(min-width: 1100px)') : { matches: false };
+
   var SETA = '<span class="seta" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>';
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function pct(v) { return (v * 100).toFixed(2) + '%'; }
@@ -64,7 +84,7 @@
     var chip = breve ? '<span class="chip chip-cinza">em breve</span>' : (c.estado === 'novo' ? '<span class="chip chip-novo">novo</span>' : '');
     var seta = c.estado === 'ativo' ? SETA : '';
     var sub = c.sub && !breve && !c.compacto ? '<span class="placa-sub">' + esc(c.sub) + '</span>' : '';
-    var empilha = c.compacto && !c.placaEsq;   /* cena de 1/3 da largura: o selo desce para baixo do nome, sem cortá-lo */
+    var empilha = c.empilha || (c.compacto && !c.placaEsq);   /* cena de 1/3 da largura: o selo desce para baixo do nome, sem cortá-lo */
     var placaEstilo = c.placaEsq ? ' style="left:' + pct(c.placaEsq) + '"' : '';
     var cls = 'app' + (breve ? ' breve' : '') + (c.compacto ? ' compacto' : '');
     var rotulo = c.nome + (breve ? ', em breve' : '');
@@ -75,7 +95,9 @@
   }
   function pintarCena(id, lista, extra) {
     var im = IMG[id];
-    $(id).innerHTML = '<img class="fundo" src="' + im.src + '" width="' + im.w + '" height="' + im.h + '" alt="' + esc(im.alt) + '"' +
+    if (mqLargo.matches) { im = LARGO[id].img; lista = LARGO[id].lista; extra = ''; }
+    $(id).style.aspectRatio = im.w + ' / ' + im.h;
+    $(id).innerHTML ='<img class="fundo" src="' + im.src + '" width="' + im.w + '" height="' + im.h + '" alt="' + esc(im.alt) + '"' +
       (im.prio ? ' fetchpriority="high"' : ' loading="lazy"') + ' decoding="async">' + lista.map(htmlApp).join('') + (extra || '');
   }
 
@@ -277,6 +299,11 @@
   /* voltar pelo «Voltar» do navegador traz a página do cache: nunca reabrir o app por cima */
   window.addEventListener('pageshow', function (ev) { if (ev.persisted) { cancelarVolta(); pintarContinuar(); } });
   window.addEventListener('pagehide', function () { if (timerVolta) cancelarVolta(); });
+
+  /* a janela passou do limite do computador (ou voltou): troca ilustração e caixas, sem recarregar */
+  function aoMudarLargura() { pintarTudo(); }
+  if (mqLargo.addEventListener) mqLargo.addEventListener('change', aoMudarLargura);
+  else if (mqLargo.addListener) mqLargo.addListener(aoMudarLargura);
 
   pintarTudo();
   talvezVoltarSozinho();

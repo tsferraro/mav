@@ -142,6 +142,22 @@ dialog::backdrop { background: rgba(27,42,38,.55); }
   .nav { display: none; }
   .rodape { margin: 12px 24px 24px; }
 }
-@media (min-width: 1100px) { .placa-nome { font-size: 17px; } }
+/* computador (≥ 1100 px, PT23): faixas na largura toda, uma panorâmica por faixa, as cenas lado a lado
+   (6 colunas em «Para trabalhar» e «Administrar», 3 em «Para aprender»); Entregas numa faixa curta.
+   O hub.js troca a ilustração e as caixas na mesma largura (mqLargo). */
+.so-largo { display: none; }
+@media (min-width: 1100px) {
+  .tela { max-width: 1360px; }
+  .corpo { display: flex; flex-direction: column; align-items: stretch; gap: 18px; padding: 20px 28px 8px; }
+  .col { display: contents; }
+  .so-largo { display: block; }
+  .so-estreito { display: none; }
+  .entregas { flex-direction: row; align-items: center; gap: 28px; padding: 10px 20px; }
+  .entregas-topo { flex: 0 0 auto; }
+  .entregas-trilha { flex: 1 1 auto; font-size: 13px; }
+  .placa, .app.compacto .placa { left: 8px; right: 8px; bottom: 10px; min-height: 60px; }
+  .placa-nome { font-size: 17px; }
+  .app.compacto .placa-nome { font-size: 16px; }
+}
 
 @media (prefers-reduced-motion: reduce) { .abrindo.correndo .abrindo-barra i { transition: none; } .placa { transition: none; } }
