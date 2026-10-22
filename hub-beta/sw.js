@@ -1,7 +1,7 @@
 /* Hub Mandū · Beta — guarda a casca do Hub para abrir sem rede. Rede primeiro (o Beta muda a toda hora),
    cópia guardada só quando a rede falha. Não guarda os apps (outra origem: Apps Script). */
-var CACHE = 'hub-mandu-20261022-1258';
-var CASCA = ['./', 'index.html', 'hub.css?v=20261022-1258', 'hub.js?v=20261022-1258', 'manifest.webmanifest',
+var CACHE = 'hub-mandu-20261022-1325';
+var CASCA = ['./', 'index.html', 'hub.css?v=20261022-1325', 'hub.js?v=20261022-1325', 'manifest.webmanifest',
   'img/cena-trabalhar.webp', 'img/cena-aprender.webp', 'img/cena-administrar.webp',
   'icones/u-mandu-32.png', 'icones/u-mandu-180.png', 'icones/u-mandu-192.png', 'icones/u-mandu-512.png'];
 self.addEventListener('install', function (e) {

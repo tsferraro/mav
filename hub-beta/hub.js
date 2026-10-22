@@ -123,6 +123,7 @@
     var url = urlDe(app, orgId);
     if (!url) { avisar('Este app ainda não tem endereço no Hub.'); return; }
     gravar(CH.ultimo, { id: app.id, nome: nomeDe(app, orgId), url: url, org: app.abre === 'sgo' ? orgId : null, modo: perfil.tipo, em: new Date().toISOString() });
+    mostrarAbrindo(nomeDe(app, orgId));   /* o app do Google leva alguns segundos: o toque responde na hora (PT19) */
     location.href = url;
   }
 
@@ -135,19 +136,28 @@
   }
   function pintarContinuar() {
     var u = ultimoValido(), a = $('continuar');
-    if (!u) { a.hidden = true; return; }
+    if (!u) { $('faixaContinuar').hidden = true; return; }
     $('continuarNome').textContent = u.nome;
-    a.href = u.url; a.hidden = false;
+    a.href = u.url; $('faixaContinuar').hidden = false;
     a.onclick = function () { var v = ler(CH.ultimo); if (v) { v.em = new Date().toISOString(); gravar(CH.ultimo, v); } };
   }
   var timerVolta = null;
-  function cancelarVolta() { if (timerVolta) clearTimeout(timerVolta); timerVolta = null; $('abrindo').hidden = true; $('abrindo').classList.remove('correndo'); }
+  function cancelarVolta() { if (timerVolta) clearTimeout(timerVolta); timerVolta = null; $('abrindo').hidden = true; $('abrindo').classList.remove('correndo', 'saindo'); }
+  function mostrarAbrindo(nome) {
+    $('abrindoRotulo').textContent = 'Abrindo';
+    $('abrindoNome').textContent = nome;
+    $('btFicar').hidden = true;
+    $('abrindo').hidden = false;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { $('abrindo').classList.add('saindo'); }); });
+  }
   function talvezVoltarSozinho() {
     if (params.get('hub') === '1') { gravar(CH.auto, 1, true); return; }
     if (ler(CH.auto, true)) return;
     var u = ultimoValido();
     if (!u) return;
     gravar(CH.auto, 1, true);
+    $('abrindoRotulo').textContent = 'Voltando para';
+    $('btFicar').hidden = false;
     $('abrindoNome').textContent = u.nome;
     $('abrindo').hidden = false;
     requestAnimationFrame(function () { requestAnimationFrame(function () { $('abrindo').classList.add('correndo'); }); });
