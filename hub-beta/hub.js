@@ -49,6 +49,8 @@
     { id: 'cronograma', x: .333, y: .5, w: .334, h: .5, nome: 'Cronograma', estado: 'breve', compacto: true },
     { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'breve', compacto: true }   /* espera o link da Avaliação de Maturidade da Camtauá; nunca o Painel MAV (PT28) */
   ];
+  /* «Maturidade» abre a página da Avaliação só onde o montar.py a pôs (destino /hub/, PT30/D4); no Beta do GitHub fica «em breve» */
+  if (LINKS.maturidade) B3.forEach(function (c) { if (c.id === 'maturidade') { c.estado = 'admin'; c.abre = 'maturidade'; } });
   var IMG = {
     cena1: { src: 'img/cena-trabalhar.webp', w: 1024, h: 1536, alt: 'Floresta com o galpão, a roça, a feira, o barco e o trapiche da organização', prio: true },
     cena2: { src: 'img/cena-aprender.webp', w: 1536, h: 1024, alt: 'A Amanda, uma roda de conversa, a sala de aula e a rede com o celular' },
@@ -129,6 +131,7 @@
       return o ? o.sgo + (o.sgo.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta()) : '';
     }
     if (app.abre === 'painel') return D.painel || '';
+    if (app.abre === 'maturidade') return LINKS.maturidade || '';
     if (app.abre === 'manual') return LINKS.manual || '';
     if (app.abre === 'videos') return LINKS.videos || '';
     return '';
@@ -137,6 +140,7 @@
     var o = orgPorId(orgId);
     if (app.abre === 'sgo') return app.nome + (o ? ' · ' + o.nome : '');
     if (app.abre === 'painel') return 'Painel da Mandū';
+    if (app.abre === 'maturidade') return 'Maturidade · Camtauá';
     return app.nome;
   }
   /* PT26 · o Manual do SGO mostra «‹ Hub Mandū» quando sabe de onde veio (contrato MA-126 do Manual, RETORNO-manual-app.md itens 24–31):
