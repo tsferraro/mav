@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Hub Mandū · Beta</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Hub Mandū: a porta de entrada da sua organização para os apps de trabalho e os materiais de formação da Mandū.">
+<meta name="theme-color" content="#005A50">
+<link rel="icon" type="image/png" sizes="32x32" href="icones/u-mandu-32.png">
+<link rel="apple-touch-icon" href="icones/u-mandu-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hub Mandū">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Mandū Inovação Social">
+<meta property="og:title" content="Hub Mandū · Beta">
+<meta property="og:description" content="Os apps e as formações da sua organização num lugar só. Toque para abrir.">
+<meta property="og:url" content="https://tsferraro.github.io/mav/hub-beta/">
+<meta property="og:image" content="https://tsferraro.github.io/mav/hub-beta/icones/card-hub-1200x630.jpg?v=20261022-1258">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hub Mandū: ilustração de floresta com o galpão da organização e o símbolo Ū">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap">
+<link rel="stylesheet" href="hub.css?v=20261022-1258">
+</head>
+<body>
+<div id="app" class="tela" data-modo="org">
+  <header class="topo">
+    <span class="topo-u"><img class="marca-u" alt="" width="62" height="84" src="data:image/png;base64,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"></span>
+    <div class="topo-nome">
+      <b id="topoTitulo">Camtauá</b>
+      <span id="topoSub">Os apps da sua organização</span>
+    </div>
+    <button type="button" class="chip-beta" id="btBeta" aria-haspopup="dialog">Beta</button>
+    <button type="button" class="bt-trocar" id="btTrocar" hidden>Trocar</button>
+  </header>
+
+  <a class="continuar" id="continuar" href="#" hidden>
+    <span class="continuar-txt"><span>Continuar de onde parou</span><b id="continuarNome">Operação</b></span>
+    <span class="seta" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+  </a>
+
+  <section id="admin" class="admin" hidden aria-label="Administrar">
+    <h2>Administrar</h2>
+    <div class="cena" id="cena3" role="group" aria-label="Administrar"></div>
+  </section>
+
+  <section class="faixa" aria-label="Entregas da Mandū">
+    <div class="entregas">
+      <div class="entregas-topo"><b>Entregas da Mandū</b><span class="chip chip-cinza">exemplo</span></div>
+      <ol class="entregas-trilha">
+        <li class="feita"><span></span>Diagnóstico</li>
+        <li class="feita"><span></span>App no ar</li>
+        <li class="feita"><span></span>Treino</li>
+        <li class="agora"><span></span>Piloto</li>
+        <li class="depois"><span></span>Transferir</li>
+      </ol>
+    </div>
+    <h2>Para trabalhar</h2>
+  </section>
+
+  <div class="cena" id="cena1" role="group" aria-label="Para trabalhar"></div>
+  <div class="cena" id="cena2" role="group" aria-label="Amanda e Para aprender"></div>
+
+  <p class="rodape">GIZ · Natura · Symrise · execução Mandū</p>
+  <nav class="nav" aria-label="Navegação">
+    <button type="button" id="navInicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Início</button>
+    <button type="button" id="navVoltar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>Voltar</button>
+  </nav>
+</div>
+
+<div class="abrindo" id="abrindo" hidden role="status" aria-live="polite">
+  <div class="abrindo-caixa">
+    <span>Voltando para</span>
+    <b id="abrindoNome">Operação</b>
+    <div class="abrindo-barra"><i></i></div>
+    <button type="button" id="btFicar" class="bt-grande">Ficar no Hub</button>
+  </div>
+</div>
+
+<dialog id="dlgOrg" aria-labelledby="dlgOrgTitulo">
+  <form method="dialog" class="dlg">
+    <h3 id="dlgOrgTitulo">Qual organização?</h3>
+    <p id="dlgOrgSub" class="dlg-sub">Escolha para abrir o app.</p>
+    <div id="dlgOrgLista" class="dlg-lista"></div>
+    <button value="cancelar" class="bt-linha">Cancelar</button>
+  </form>
+</dialog>
+
+<dialog id="dlgBeta" aria-labelledby="dlgBetaTitulo">
+  <form method="dialog" class="dlg">
+    <h3 id="dlgBetaTitulo">Hub Mandū · Beta</h3>
+    <p class="dlg-sub">Versão de teste para calibrar as integrações. Escolha como ver o Hub:</p>
+    <div class="dlg-lista">
+      <button type="button" class="bt-opcao" id="betaOrg">Ver como a organização <small id="betaOrgNome">Camtauá</small></button>
+      <button type="button" class="bt-opcao" id="betaEquipe">Ver como a equipe Mandū <small>Painel da equipe</small></button>
+      <button type="button" class="bt-opcao" id="betaEsquecer">Esquecer o último app <small id="betaUltimo">nenhum guardado</small></button>
+    </div>
+    <p class="dlg-versao">versão 20261022-1258</p>
+    <button value="fechar" class="bt-linha">Fechar</button>
+  </form>
+</dialog>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite" hidden></div>
+
+<script>window.HUB_ORGS = {"padrao": "camtaua-oficial", "painel": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec?painel=1", "links": {"maturidade": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbxTfNnovk3_GTrr38_eZ1d4Gf6hr84dM4zwD24md92Rb-lm2-JMOpKewn_SWs1YouY/exec", "manual": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/", "videos": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/"}, "orgs": [{"id": "camtaua-oficial", "nome": "Camtauá", "grupo": "organizacoes", "local": "Santo Antônio do Tauá, PA", "sgo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec/camtaua-oficial"}, {"id": "camtaua-demo", "nome": "Demo Tobia", "grupo": "testes", "local": "Demonstração · testes do Tobia", "sgo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec/demo"}, {"id": "teste-felipe", "nome": "Demo Felipe", "grupo": "testes", "local": "Demonstração · apresentação e formação", "sgo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec/felipe"}, {"id": "demo-rodrigo", "nome": "Demo Rodrigo", "grupo": "testes", "local": "Demonstração · teste independente", "sgo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec/rodrigo"}]}; window.HUB_VERSAO = "20261022-1258";</script>
+<script src="hub.js?v=20261022-1258"></script>
+</body>
+</html>

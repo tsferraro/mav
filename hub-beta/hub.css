@@ -1,0 +1,109 @@
+/* Hub Mandū · Beta — telas F (organização, verde MAV, D8) e G (Painel da equipe, laranja Mandū, D9).
+   Geometria das cenas em frações da ilustração (mesmas caixas de working/2026-10-21-hub-caminhos/scripts/montar-hub-v2.py),
+   para a tela crescer do celular (390 px) ao computador (coluna de até 480 px) sem redesenhar. */
+:root {
+  --verde: #005A50; --verde-esc: #00403A; --verde-claro: #CFE6E0; --verde-borda: #2F7A70;
+  --laranja: #FF6E00; --laranja-texto: #B24D00; --laranja-borda: #C85600; --laranja-claro: #FFF1E6;
+  --creme: #FFF7EF; --tinta: #1B2A26; --tinta-2: #2F3B44; --cinza: #4A5560; --cinza-2: #5A6670; --areia: #EFE7DB;
+  --acao: var(--verde); --acao-fg: #FFFFFF; --barra: var(--verde); --barra-fg: #FFFFFF; --barra-borda: var(--verde-borda);
+}
+[data-modo="equipe"] { --barra: var(--laranja); --barra-fg: #1A1A1A; --barra-borda: var(--laranja-borda); }
+* { box-sizing: border-box; }
+html { background: #E9E4DA; }
+body { margin: 0; background: #E9E4DA; color: var(--tinta); font-family: Ubuntu, Calibri, "Segoe UI", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; }
+.tela { max-width: 480px; min-height: 100vh; min-height: 100dvh; margin: 0 auto; background: var(--creme); display: flex; flex-direction: column; box-shadow: 0 0 24px rgba(27,42,38,.12); }
+[hidden] { display: none !important; }
+
+/* topo */
+.topo { min-height: 60px; flex-shrink: 0; background: var(--barra); color: var(--barra-fg); display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 5; }
+.topo-u { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.topo-u .marca-u { height: 30px; width: auto; object-fit: contain; display: block; }
+[data-modo="equipe"] .topo-u { width: 34px; height: 34px; border-radius: 50%; background: #FFFFFF; }
+[data-modo="equipe"] .topo-u .marca-u { height: 24px; }
+.topo-nome { display: flex; flex-direction: column; line-height: 1.1; flex-grow: 1; min-width: 0; }
+.topo-nome b { font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topo-nome span { font-size: 13px; color: var(--verde-claro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-modo="equipe"] .topo-nome span { color: #3A2A1A; }
+.chip-beta { min-height: 32px; padding: 0 10px; border-radius: 999px; border: 2px solid currentColor; background: transparent; font-size: 12px; font-weight: 700; letter-spacing: .02em; cursor: pointer; position: relative; }
+.chip-beta::after { content: ""; position: absolute; inset: -8px; } /* área de toque de 48 px */
+.bt-trocar { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 2px solid #1A1A1A; background: transparent; color: #1A1A1A; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+/* continuar de onde parou */
+.continuar { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 12px 6px 16px; background: #FFFFFF; color: var(--tinta); text-decoration: none; border-bottom: 1px solid var(--areia); }
+.continuar-txt { display: flex; flex-direction: column; flex-grow: 1; line-height: 1.2; min-width: 0; }
+.continuar-txt span { font-size: 12px; color: var(--cinza); }
+.continuar-txt b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seta { width: 30px; height: 30px; border-radius: 50%; background: var(--acao); color: var(--acao-fg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Administrar (só na G) */
+.admin h2 { margin: 0; padding: 4px 20px 10px; background: var(--laranja); color: #1A1A1A; font-size: 17px; font-weight: 700; }
+
+/* faixa verde: Entregas + «Para trabalhar» */
+.faixa { flex-shrink: 0; background: var(--verde); padding: 0 12px 10px; }
+.entregas { background: var(--creme); border-radius: 14px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+.tela[data-modo="equipe"] .faixa { padding-top: 10px; }
+.entregas-topo { display: flex; align-items: center; gap: 8px; }
+.entregas-topo b { font-size: 14px; flex-grow: 1; }
+.entregas-trilha { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; font-size: 11px; color: var(--cinza); text-align: center; line-height: 1.2; }
+.entregas-trilha li { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.entregas-trilha span { display: block; width: 14px; height: 14px; border-radius: 50%; }
+.entregas-trilha .feita span { background: var(--verde); }
+.entregas-trilha .agora { color: var(--laranja-texto); font-weight: 700; }
+.entregas-trilha .agora span { width: 14px; height: 14px; border: 2px solid var(--laranja); background: #FFFFFF; }
+.entregas-trilha .depois span { width: 14px; height: 14px; border: 2px solid #C9C2B4; background: #FFFFFF; }
+.faixa h2 { margin: 10px 4px 0; font-size: 17px; font-weight: 700; color: #FFFFFF; }
+
+/* cenas: uma ilustração inteira por bloco (D7); botões por cima, um por cena */
+.cena { position: relative; width: 100%; flex-shrink: 0; overflow: hidden; background: #DCE8DF; }
+.cena > img.fundo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#cena1 { aspect-ratio: 1024 / 1536; }
+#cena2, #cena3 { aspect-ratio: 1536 / 1024; }
+.app { position: absolute; display: block; text-decoration: none; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+.app:focus-visible { outline: 3px solid var(--laranja); outline-offset: -3px; }
+.placa { position: absolute; left: 6px; right: 6px; bottom: 6px; min-height: 48px; background: rgba(255,255,255,.94); border-radius: 12px; box-shadow: 0 2px 6px rgba(27,42,38,.18); padding: 6px 8px; display: flex; align-items: center; gap: 6px; text-align: left; transition: transform .12s ease, box-shadow .12s ease; }
+.app:active .placa { transform: translateY(1px) scale(.99); box-shadow: 0 1px 3px rgba(27,42,38,.2); }
+.placa-txt { display: flex; flex-direction: column; gap: 1px; flex-grow: 1; min-width: 0; }
+.placa-nome { font-size: 15px; font-weight: 700; line-height: 1.15; color: var(--tinta); }
+.placa-sub { font-size: 12px; color: var(--cinza); line-height: 1.2; }
+.app.breve .placa-nome { color: var(--cinza-2); }
+.app.compacto .placa { min-height: 36px; }
+.app.compacto .placa-nome { font-size: 14px; }
+.chip { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; }
+.placa-txt .chip { align-self: flex-start; margin-top: 2px; }
+.chip-cinza { color: var(--cinza); background: var(--areia); }
+.chip-novo { color: var(--laranja-texto); background: var(--laranja-claro); }
+.titulo-cena { position: absolute; left: 10px; font-size: 15px; font-weight: 700; color: #FFFFFF; background: var(--verde); border-radius: 999px; padding: 5px 12px; box-shadow: 0 2px 6px rgba(0,0,0,.18); pointer-events: none; }
+
+.rodape { margin: 8px 0; font-size: 12px; color: var(--cinza); text-align: center; }
+.nav { margin-top: auto; min-height: 64px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--barra); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+.nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; background: transparent; border: 0; color: var(--barra-fg); font-size: 13px; font-weight: 700; cursor: pointer; }
+.nav button + button { border-left: 1px solid var(--barra-borda); }
+
+/* «voltando para…» */
+.abrindo { position: fixed; inset: 0; z-index: 20; background: rgba(0,64,58,.86); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.abrindo-caixa { width: 100%; max-width: 360px; background: var(--creme); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px; text-align: center; }
+.abrindo-caixa span { font-size: 14px; color: var(--cinza); }
+.abrindo-caixa b { font-size: 22px; }
+.abrindo-barra { height: 6px; border-radius: 3px; background: var(--areia); overflow: hidden; margin: 6px 0 10px; }
+.abrindo-barra i { display: block; height: 100%; width: 0; background: var(--verde); }
+.abrindo.correndo .abrindo-barra i { width: 100%; transition: width 1.6s linear; }
+.bt-grande { min-height: 52px; border-radius: 14px; border: 2px solid var(--verde); background: #FFFFFF; color: var(--tinta); font-size: 16px; font-weight: 700; cursor: pointer; }
+
+/* diálogos */
+dialog { border: 0; padding: 0; border-radius: 18px; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); background: var(--creme); color: var(--tinta); box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+dialog::backdrop { background: rgba(27,42,38,.55); }
+.dlg { display: flex; flex-direction: column; gap: 10px; padding: 18px 16px 16px; }
+.dlg h3 { margin: 0; font-size: 19px; }
+.dlg-sub { margin: 0; font-size: 14px; color: var(--cinza); }
+.dlg-lista { display: flex; flex-direction: column; gap: 8px; }
+.dlg-grupo { margin: 6px 0 0; font-size: 12px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: .04em; }
+.bt-opcao { min-height: 52px; width: 100%; border-radius: 12px; border: 2px solid var(--areia); background: #FFFFFF; color: var(--tinta); font-size: 16px; font-weight: 700; text-align: left; padding: 8px 14px; display: flex; flex-direction: column; justify-content: center; cursor: pointer; }
+.bt-opcao small { font-size: 12px; font-weight: 400; color: var(--cinza); }
+.bt-opcao.ultima { border-color: var(--laranja); }
+.bt-linha { min-height: 48px; border-radius: 12px; border: 2px solid var(--tinta); background: transparent; color: var(--tinta); font-size: 15px; font-weight: 700; cursor: pointer; }
+.dlg-versao { margin: 0; font-size: 11px; color: var(--cinza); text-align: right; }
+
+.aviso { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 30; background: var(--tinta); color: #FFFFFF; font-size: 14px; padding: 10px 16px; border-radius: 12px; max-width: calc(100vw - 32px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+
+@media (prefers-reduced-motion: reduce) { .abrindo.correndo .abrindo-barra i { transition: none; } .placa { transition: none; } }
