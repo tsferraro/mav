@@ -141,8 +141,16 @@
     if (app.abre === 'maturidade') return 'Maturidade · Painel MAV';
     return app.nome;
   }
+  /* PT26 · o Manual do SGO mostra «‹ Hub Mandū» quando sabe de onde veio (contrato MA-126 do Manual, RETORNO-manual-app.md itens 24–31):
+     ?de=hub&volta=<este Hub com ?hub=1> antes do #; com ?hub=1 o Hub não volta sozinho para o último app. */
+  var MANUAL = 'https://mandu-labs.lp.agentesamanda.com/manual-sgo/';
+  function comOrigem(url) {
+    if (!url || url.indexOf(MANUAL) !== 0 || !/^https:$/.test(location.protocol)) return url;
+    var i = url.indexOf('#'), base = i < 0 ? url : url.slice(0, i), hash = i < 0 ? '' : url.slice(i);
+    return base + (base.indexOf('?') < 0 ? '?' : '&') + 'de=hub&volta=' + encodeURIComponent(location.origin + location.pathname + '?hub=1') + hash;
+  }
   function abrir(app, orgId) {
-    var url = urlDe(app, orgId);
+    var url = comOrigem(urlDe(app, orgId));
     if (!url) { avisar('Este app ainda não tem endereço no Hub.'); return; }
     gravar(CH.ultimo, { id: app.id, nome: nomeDe(app, orgId), url: url, org: app.abre === 'sgo' ? orgId : null, modo: perfil.tipo, em: new Date().toISOString() });
     mostrarAbrindo(nomeDe(app, orgId));   /* o app do Google leva alguns segundos: o toque responde na hora (PT19) */
