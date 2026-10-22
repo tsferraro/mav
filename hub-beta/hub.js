@@ -145,6 +145,7 @@
   function comOrigem(url) {
     if (!url || url.indexOf(MANUAL) !== 0 || !/^https:$/.test(location.protocol)) return url;
     var i = url.indexOf('#'), base = i < 0 ? url : url.slice(0, i), hash = i < 0 ? '' : url.slice(i);
+    if (/[?&]de=/.test(base)) return url;   /* já tem a origem */
     return base + (base.indexOf('?') < 0 ? '?' : '&') + 'de=hub&volta=' + encodeURIComponent(location.origin + location.pathname + '?hub=1') + hash;
   }
   function abrir(app, orgId) {
@@ -162,6 +163,7 @@
     if (perfil.tipo === 'org' && u.org && u.org !== perfil.org) return null;
     var app = APPS[u.id];
     if (app && app.estado === 'breve') return null;   /* app que saiu do ar (ex.: Maturidade do Painel MAV) não volta pelo «Continuar» */
+    u.url = comOrigem(u.url);   /* PT26: endereço guardado antes da origem também volta com «‹ Hub» no Manual */
     return u;
   }
   /* «Continuar de onde parou»: no celular, faixa abaixo do topo; do tablet em diante, cartão ao lado do título (PT28) */
