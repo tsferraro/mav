@@ -47,7 +47,7 @@
     { id: 'links', x: .667, y: 0, w: .333, h: .5, nome: 'Links e QR', estado: 'admin', abre: 'painel', compacto: true },
     { id: 'agenda', x: 0, y: .5, w: .333, h: .5, nome: 'Agenda', estado: 'breve', compacto: true },
     { id: 'cronograma', x: .333, y: .5, w: .334, h: .5, nome: 'Cronograma', estado: 'breve', compacto: true },
-    { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'admin', abre: 'maturidade', compacto: true }
+    { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'breve', compacto: true }   /* espera o link da Avaliação de Maturidade da Camtauá; nunca o Painel MAV (PT28) */
   ];
   var IMG = {
     cena1: { src: 'img/cena-trabalhar.webp', w: 1024, h: 1536, alt: 'Floresta com o galpão, a roça, a feira, o barco e o trapiche da organização', prio: true },
@@ -129,7 +129,6 @@
       return o ? o.sgo + (o.sgo.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta()) : '';
     }
     if (app.abre === 'painel') return D.painel || '';
-    if (app.abre === 'maturidade') return LINKS.maturidade || '';
     if (app.abre === 'manual') return LINKS.manual || '';
     if (app.abre === 'videos') return LINKS.videos || '';
     return '';
@@ -138,7 +137,6 @@
     var o = orgPorId(orgId);
     if (app.abre === 'sgo') return app.nome + (o ? ' · ' + o.nome : '');
     if (app.abre === 'painel') return 'Painel da Mandū';
-    if (app.abre === 'maturidade') return 'Maturidade · Painel MAV';
     return app.nome;
   }
   /* PT26 · o Manual do SGO mostra «‹ Hub Mandū» quando sabe de onde veio (contrato MA-126 do Manual, RETORNO-manual-app.md itens 24–31):
@@ -162,14 +160,21 @@
     var u = ler(CH.ultimo);
     if (!u || !u.url || u.modo !== perfil.tipo) return null;
     if (perfil.tipo === 'org' && u.org && u.org !== perfil.org) return null;
+    var app = APPS[u.id];
+    if (app && app.estado === 'breve') return null;   /* app que saiu do ar (ex.: Maturidade do Painel MAV) não volta pelo «Continuar» */
     return u;
   }
+  /* «Continuar de onde parou»: no celular, faixa abaixo do topo; do tablet em diante, cartão ao lado do título (PT28) */
   function pintarContinuar() {
-    var u = ultimoValido(), a = $('continuar');
-    if (!u) { $('faixaContinuar').hidden = true; return; }
-    $('continuarNome').textContent = u.nome;
-    a.href = u.url; $('faixaContinuar').hidden = false;
-    a.onclick = function () { var v = ler(CH.ultimo); if (v) { v.em = new Date().toISOString(); gravar(CH.ultimo, v); } };
+    var u = ultimoValido();
+    $('faixaContinuar').hidden = !u; $('continuarTopo').hidden = !u;
+    if (!u) return;
+    [['continuar', 'continuarNome'], ['continuarTopo', 'continuarTopoNome']].forEach(function (par) {
+      var a = $(par[0]);
+      $(par[1]).textContent = u.nome;
+      a.href = u.url;
+      a.onclick = function () { var v = ler(CH.ultimo); if (v) { v.em = new Date().toISOString(); gravar(CH.ultimo, v); } };
+    });
   }
   var timerVolta = null;
   function cancelarVolta() { if (timerVolta) clearTimeout(timerVolta); timerVolta = null; $('abrindo').hidden = true; $('abrindo').classList.remove('correndo', 'saindo'); }
