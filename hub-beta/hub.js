@@ -153,8 +153,11 @@
   if (veioDoPorteiro) {
     var q = params.get('quem');
     if (q === 'equipe' || q === 'outro' || q === 'org' || q === 'recusa') {
-      quem = { tipo: q, fonte: 'porteiro', em: agora }; gravar(CH.quem, quem);
-      if (q === 'equipe' || q === 'org') gravar(CH.orgs, { orgs: listaDoHash() || [], em: agora }); else apagar(CH.orgs);
+      quem = { tipo: q, fonte: 'porteiro', em: agora };
+      /* auditoria S4: com várias contas no navegador, o Porteiro pode ter lido a conta errada. «recusa» e «outro» valem só nesta
+         aba (nada fica no aparelho): a próxima abertura passa de novo pelo Porteiro, que mostra a conta e deixa trocar. */
+      if (q === 'equipe' || q === 'org') { gravar(CH.quem, quem); gravar(CH.orgs, { orgs: listaDoHash() || [], em: agora }); }
+      else { apagar(CH.quem); apagar(CH.orgs); }
     }
     else setTimeout(function () { avisar('Não consegui ler a sua conta Google. Abrindo o Hub da organização.'); }, 300);
   } else if (params.get('equipe') === '1' && !PORTEIRO.url) {
