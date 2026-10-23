@@ -136,7 +136,13 @@
       return { id: o.id, nome: String(o.nome || o.id).slice(0, 80), grupo: o.grupo === 'producao' ? 'organizacoes' : 'testes' };
     });
   }
-  var veioDoPorteiro = params.get('via') === 'porteiro';
+  /* auditoria (lente 1): `state` de uso único entre o Hub e o Porteiro. O Hub sorteia, guarda na aba e manda; o Porteiro devolve
+     igual. Volta sem o state certo (link forjado com ?via=porteiro) não reescreve nada do aparelho. */
+  CH.state = 'hub_state_v1';
+  var stateGuardado = ler(CH.state, true);
+  try { sessionStorage.removeItem(CH.state); } catch (e) {}
+  var veioDoPorteiro = params.get('via') === 'porteiro' && !!stateGuardado && params.get('state') === stateGuardado;
+  if (params.get('via') === 'porteiro' && !veioDoPorteiro) setTimeout(function () { avisar('Este endereço não veio da sua entrada no Google. Nada mudou neste aparelho.'); }, 300);
   if (veioDoPorteiro) {
     var q = params.get('quem');
     if (q === 'equipe' || q === 'outro' || q === 'org' || q === 'recusa') {
@@ -179,11 +185,19 @@
 
   /* ---------- Porteiro: aba inteira ao /exec?quem=1 (nunca fetch: o login do Google não tem CORS) ---------- */
   var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-  function urlPorteiro() { return PORTEIRO.url + '&volta=' + encodeURIComponent(location.origin + location.pathname); }
+  function sortearState() {
+    var a = new Uint8Array(16), t = '';
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) t += ('0' + a[j].toString(16)).slice(-2);
+    return t;
+  }
+  function urlPorteiro(st) { return PORTEIRO.url + '&volta=' + encodeURIComponent(location.origin + location.pathname) + '&state=' + st; }
   function irAoPorteiro() {
+    var st = sortearState();
+    gravar(CH.state, st, true);
     gravar(CH.porteiro, 1, true);
     mostrarAbrindo('Conferindo a sua conta Google');
-    location.replace(urlPorteiro());
+    location.replace(urlPorteiro(st));
   }
   var indoAoPorteiro = !!PORTEIRO.url && !params.get('equipe') && !params.get('org') && !veioDoPorteiro &&
     !quemValido() && !ler(CH.porteiro, true) && !(instalado && PORTEIRO.instalado === 'botao');
@@ -336,10 +350,10 @@
   });
 
   var avisoTimer = null;
-  function avisar(t) {
+  function avisar(t, ms) {
     var a = $('aviso'); a.textContent = t; a.hidden = false;
     if (avisoTimer) clearTimeout(avisoTimer);
-    avisoTimer = setTimeout(function () { a.hidden = true; }, 2600);
+    avisoTimer = setTimeout(function () { a.hidden = true; }, ms || 2600);
   }
 
   /* ---------- pintura ---------- */
@@ -400,6 +414,21 @@
     perfil = { tipo: 'equipe' }; visaoDoLink = false;
     gravar(CH.visao, perfil, true); $('dlgBeta').close(); pintarTudo(); window.scrollTo(0, 0);
   });
+  /* auditoria H1 (tablet do galpão dividido): «Sair» esquece a conta, a lista, a visão e o último app deste aparelho */
+  function temContaNoAparelho() { return !!(ler(CH.quem) || ler(CH.orgs) || ler(CH.ultimo) || ler(CH.perfil) || ler(CH.orgEquipe)); }
+  function pintarSair() { $('navSair').hidden = $('betaSair').hidden = !temContaNoAparelho(); $('nav').classList.toggle('com-sair', !$('navSair').hidden); }
+  function sair() {
+    if (!window.confirm('Sair deste aparelho?\n\nO Hub esquece a conta, as organizações e o último app aberto aqui.')) return;
+    [CH.quem, CH.orgs, CH.perfil, CH.ultimo, CH.orgEquipe].forEach(apagar);
+    try { sessionStorage.clear(); } catch (e) {}
+    quem = null; ORGS = SEM_LISTA ? [] : (D.orgs || []); recusado = false; visaoDoLink = false;
+    perfil = { tipo: 'org', org: D.padrao || null };
+    try { $('dlgBeta').close(); } catch (e) {}
+    pintarTudo(); pintarSair(); window.scrollTo(0, 0);
+    avisar('Pronto: o Hub esqueceu esta conta. Antes de passar o aparelho, saia também da conta Google (no Gmail ou em accounts.google.com).', 9000);
+  }
+  $('navSair').addEventListener('click', sair);
+  $('betaSair').addEventListener('click', sair);
   $('betaConta').hidden = !PORTEIRO.url;
   $('betaConta').addEventListener('click', function () {   /* conta errada escolhida no Google, ou visão vencida: confere de novo */
     apagar(CH.quem); $('dlgBeta').close(); irAoPorteiro();
@@ -418,7 +447,7 @@
   else if (mqLargo.addListener) mqLargo.addListener(aoMudarLargura);
 
   if (indoAoPorteiro) irAoPorteiro();
-  else { pintarTudo(); talvezVoltarSozinho(); }
+  else { pintarTudo(); pintarSair(); talvezVoltarSozinho(); }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });

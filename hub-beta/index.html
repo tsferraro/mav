@@ -18,7 +18,7 @@
 <meta property="og:title" content="Hub Mandū · Beta">
 <meta property="og:description" content="Os apps e as formações da sua organização num lugar só. Toque para abrir.">
 <meta property="og:url" content="https://tsferraro.github.io/mav/hub-beta/">
-<meta property="og:image" content="https://tsferraro.github.io/mav/hub-beta/icones/card-hub-1200x630.jpg?v=20261023-1630">
+<meta property="og:image" content="https://tsferraro.github.io/mav/hub-beta/icones/card-hub-1200x630.jpg?v=20261023-1636">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Hub Mandū: ilustração de floresta com o galpão da organização e o símbolo Ū">
@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap">
-<link rel="stylesheet" href="hub.css?v=20261023-1630">
+<link rel="stylesheet" href="hub.css?v=20261023-1636">
 </head>
 <body>
 <div id="app" class="tela" data-modo="org">
@@ -83,9 +83,10 @@
   </main>
 
   <p class="rodape">GIZ · Natura · Symrise · execução Mandū</p>
-  <nav class="nav" aria-label="Navegação">
+  <nav class="nav" id="nav" aria-label="Navegação">
     <button type="button" id="navInicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Início</button>
     <button type="button" id="navVoltar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>Voltar</button>
+    <button type="button" id="navSair" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Sair</button>
   </nav>
 </div>
 
@@ -115,16 +116,17 @@
       <button type="button" class="bt-opcao" id="betaOrg">Ver como a organização <small id="betaOrgNome"></small></button>
       <button type="button" class="bt-opcao" id="betaEquipe">Ver como a equipe Mandū <small>Painel da equipe</small></button>
       <button type="button" class="bt-opcao" id="betaEsquecer">Esquecer o último app <small id="betaUltimo">nenhum guardado</small></button>
+      <button type="button" class="bt-opcao" id="betaSair" hidden>Sair deste aparelho <small>esquece a conta e o último app (aparelho dividido)</small></button>
       <button type="button" class="bt-opcao" id="betaConta" hidden>Conferir a minha conta de novo <small>abre o Google para escolher a conta</small></button>
     </div>
-    <p class="dlg-versao">versão 20261023-1630</p>
+    <p class="dlg-versao">versão 20261023-1636</p>
     <button value="fechar" class="bt-linha">Fechar</button>
   </form>
 </dialog>
 
 <div class="aviso" id="aviso" role="status" aria-live="polite" hidden></div>
 
-<script>window.HUB_ORGS = {"semLista": true, "padrao": "", "painel": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec?painel=1", "links": {"manual": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/", "videos": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/#/visual"}, "orgs": [], "porteiro": {"url": "", "validadeH": 24, "instalado": "auto"}, "exec": {"curto": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec", "longo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec"}}; window.HUB_VERSAO = "20261023-1630";</script>
-<script src="hub.js?v=20261023-1630"></script>
+<script>window.HUB_ORGS = {"semLista": true, "padrao": "", "painel": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec?painel=1", "links": {"manual": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/", "videos": "https://mandu-labs.lp.agentesamanda.com/manual-sgo/#/visual"}, "orgs": [], "porteiro": {"url": "", "validadeH": 24, "instalado": "auto"}, "exec": {"curto": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec", "longo": "https://script.google.com/a/macros/mandusocial.org/s/AKfycbyw9syhEIyuaMaYT-ej95koauzv4hXlLJEyAXY6OMwL4Ba6socaChpIapRx9ekWcVve/exec"}}; window.HUB_VERSAO = "20261023-1636";</script>
+<script src="hub.js?v=20261023-1636"></script>
 </body>
 </html>

@@ -93,6 +93,8 @@ button { font: inherit; color: inherit; }
 .nav { margin-top: auto; min-height: 64px; flex-shrink: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--barra); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
 .nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; background: transparent; border: 0; color: var(--barra-fg); font-size: 13px; font-weight: 700; cursor: pointer; }
 .nav button + button { border-left: 1px solid var(--barra-borda); }
+.nav.com-sair { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.nav button[hidden] { display: none; }
 
 /* «voltando para…» */
 .abrindo { position: fixed; inset: 0; z-index: 20; background: rgba(0,64,58,.86); display: flex; align-items: center; justify-content: center; padding: 24px; }
