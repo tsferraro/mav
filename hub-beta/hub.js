@@ -54,7 +54,9 @@
     { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'breve', compacto: true }   /* D28: sai do Hub; volta pela casca do SGO (PT41), nunca o Painel MAV (PT28) */
   ];
   /* «Maturidade» abre a página da Avaliação só onde o montar.py a pôs (destino /hub/, PT30/D4); no Beta do GitHub fica «em breve» */
-  if (LINKS.maturidade) B3.forEach(function (c) { if (c.id === 'maturidade') { c.estado = 'admin'; c.abre = 'maturidade'; } });
+  /* PT41 / H10-749: com a casca no SGO (D.maturidade = /exec longo), a equipe escolhe a organização e abre ?org=<id>&maturidade=1 */
+  var MAT_CASCA = D.maturidade || '';
+  if (LINKS.maturidade || MAT_CASCA) B3.forEach(function (c) { if (c.id === 'maturidade') { c.estado = 'admin'; c.abre = 'maturidade'; } });
   var IMG = {
     cena1: { src: 'img/cena-trabalhar.webp', w: 1024, h: 1536, alt: 'Floresta com o galpão, a roça, a feira, o barco e o trapiche da organização', prio: true },
     cena2: { src: 'img/cena-aprender.webp', w: 1536, h: 1024, alt: 'A Amanda, uma roda de conversa, a sala de aula e a rede com o celular' },
@@ -138,9 +140,14 @@
   }
   /* auditoria (lente 1): `state` de uso único entre o Hub e o Porteiro. O Hub sorteia, guarda na aba e manda; o Porteiro devolve
      igual. Volta sem o state certo (link forjado com ?via=porteiro) não reescreve nada do aparelho. */
+  /* auditoria Fable M1: o state mora no aparelho (localStorage), não na aba — a volta do Porteiro por outra aba ou Custom Tab
+     ainda bate. Vale STATE_MIN minutos e é apagado na 1ª volta (certa ou não) ou quando vence. No iPhone, o Hub instalado não
+     divide o armazenamento com o Safari: lá vale o PORTEIRO_INSTALADO = "botao" (sonda b). */
   CH.state = 'hub_state_v1';
-  var stateGuardado = ler(CH.state, true);
-  try { sessionStorage.removeItem(CH.state); } catch (e) {}
+  var STATE_MIN = 10;
+  var stGuardado = ler(CH.state), stIdade = stGuardado ? Date.now() - Date.parse(stGuardado.em || 0) : -1;
+  var stateGuardado = stGuardado && stIdade >= 0 && stIdade < STATE_MIN * 60e3 ? stGuardado.s : null;
+  if (params.get('via') === 'porteiro' || (stGuardado && !stateGuardado)) apagar(CH.state);
   var veioDoPorteiro = params.get('via') === 'porteiro' && !!stateGuardado && params.get('state') === stateGuardado;
   if (params.get('via') === 'porteiro' && !veioDoPorteiro) setTimeout(function () { avisar('Este endereço não veio da sua entrada no Google. Nada mudou neste aparelho.'); }, 300);
   if (veioDoPorteiro) {
@@ -150,22 +157,28 @@
       if (q === 'equipe' || q === 'org') gravar(CH.orgs, { orgs: listaDoHash() || [], em: agora }); else apagar(CH.orgs);
     }
     else setTimeout(function () { avisar('Não consegui ler a sua conta Google. Abrindo o Hub da organização.'); }, 300);
-  } else if (params.get('equipe') === '1') {
-    quem = { tipo: 'equipe', fonte: 'link', em: agora }; gravar(CH.quem, quem);   /* o botão «Hub Mandū» do SGO e o Painel mandam assim */
+  } else if (params.get('equipe') === '1' && !PORTEIRO.url) {
+    quem = { tipo: 'equipe', fonte: 'link', em: agora }; gravar(CH.quem, quem);   /* Porteiro desligado: o botão «Hub Mandū» do SGO e o Painel mandam assim */
   }
+  /* auditoria Fable G1: com o Porteiro ligado, só o Porteiro dá a visão da equipe. `?equipe=1` não grava nem renova (é ignorado
+     e o Hub vai ao Porteiro); a identidade vale só com fonte «porteiro» e dentro da validade; a lista guardada também vence. */
+  function dentroDaValidade(em) { var idade = Date.now() - Date.parse(em || 0); return idade >= 0 && idade < PORTEIRO.validadeH * 3600e3; }
   function quemValido() {
     if (!quem || !quem.tipo) return null;
     if (!PORTEIRO.url) return quem;   /* desligado: como antes, o guardado não vence */
-    var idade = Date.now() - Date.parse(quem.em || 0);
-    return idade >= 0 && idade < PORTEIRO.validadeH * 3600e3 ? quem : null;
+    return quem.fonte === 'porteiro' && dentroDaValidade(quem.em) ? quem : null;
   }
+  var equipeDoLink = params.get('equipe') === '1' && !PORTEIRO.url;
 
-  if (SEM_LISTA) { var lg = ler(CH.orgs); ORGS = lg && Array.isArray(lg.orgs) && quemValido() ? lg.orgs : []; }
+  if (SEM_LISTA) {
+    var lg = ler(CH.orgs);
+    ORGS = lg && Array.isArray(lg.orgs) && quemValido() && (!PORTEIRO.url || dentroDaValidade(lg.em)) ? lg.orgs : [];
+  }
 
   /* ---------- visão (F = organização · G = equipe) ---------- */
   var perfil = null, visaoDoLink = false;
   var ehEquipe = quemValido() && quemValido().tipo === 'equipe';
-  if (params.get('equipe') === '1') { perfil = { tipo: 'equipe' }; visaoDoLink = true; }
+  if (equipeDoLink) { perfil = { tipo: 'equipe' }; visaoDoLink = true; }
   else if (params.get('org')) {
     if (orgPorId(params.get('org'))) {
       perfil = { tipo: 'org', org: params.get('org') }; visaoDoLink = true;
@@ -194,12 +207,13 @@
   function urlPorteiro(st) { return PORTEIRO.url + '&volta=' + encodeURIComponent(location.origin + location.pathname) + '&state=' + st; }
   function irAoPorteiro() {
     var st = sortearState();
-    gravar(CH.state, st, true);
+    gravar(CH.state, { s: st, em: new Date().toISOString() });
     gravar(CH.porteiro, 1, true);
     mostrarAbrindo('Conferindo a sua conta Google');
     location.replace(urlPorteiro(st));
   }
-  var indoAoPorteiro = !!PORTEIRO.url && !params.get('equipe') && !params.get('org') && !veioDoPorteiro &&
+  /* `?equipe=1` com o Porteiro ligado não segura mais o Hub (G1); volta do Porteiro que não bateu não vai de novo (sem laço) */
+  var indoAoPorteiro = !!PORTEIRO.url && !params.get('org') && !veioDoPorteiro && params.get('via') !== 'porteiro' &&
     !quemValido() && !ler(CH.porteiro, true) && !(instalado && PORTEIRO.instalado === 'botao');
 
   function orgEquipe() { var id = ler(CH.orgEquipe); return orgPorId(id) ? id : null; }
@@ -222,7 +236,11 @@
       return base + (base.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta());
     }
     if (app.abre === 'painel') return D.painel || '';
-    if (app.abre === 'maturidade') return LINKS.maturidade || '';
+    if (app.abre === 'maturidade') {
+      if (!MAT_CASCA) return LINKS.maturidade || '';
+      if (!orgPorId(orgId)) return '';
+      return MAT_CASCA + '?org=' + encodeURIComponent(orgId) + '&maturidade=1&hub=' + encodeURIComponent(hubVolta());
+    }
     if (app.abre === 'manual') return LINKS.manual || '';
     if (app.abre === 'videos') return LINKS.videos || '';
     return '';
@@ -231,7 +249,7 @@
     var o = orgPorId(orgId);
     if (app.abre === 'sgo') return app.nome + (o ? ' · ' + o.nome : '');
     if (app.abre === 'painel') return 'Painel da Mandū';
-    if (app.abre === 'maturidade') return 'Maturidade';
+    if (app.abre === 'maturidade') return 'Maturidade' + (MAT_CASCA && o && o.nome ? ' · ' + o.nome : '');
     return app.nome;
   }
   /* PT26 · o Manual do SGO mostra «‹ Hub Mandū» quando sabe de onde veio (contrato MA-126 do Manual, RETORNO-manual-app.md itens 24–31):
@@ -246,7 +264,7 @@
   function abrir(app, orgId) {
     var url = comOrigem(urlDe(app, orgId));
     if (!url) { avisar('Este app ainda não tem endereço no Hub.'); return; }
-    gravar(CH.ultimo, { id: app.id, nome: nomeDe(app, orgId), url: url, org: app.abre === 'sgo' ? orgId : null, modo: perfil.tipo, em: new Date().toISOString() });
+    gravar(CH.ultimo, { id: app.id, nome: nomeDe(app, orgId), url: url, org: app.abre === 'sgo' || (app.abre === 'maturidade' && MAT_CASCA) ? orgId : null, modo: perfil.tipo, em: new Date().toISOString() });
     mostrarAbrindo(nomeDe(app, orgId));   /* o app do Google leva alguns segundos: o toque responde na hora (PT19) */
     location.href = url;
   }
@@ -258,7 +276,7 @@
     if (perfil.tipo === 'org' && u.org && u.org !== perfil.org) return null;
     var app = APPS[u.id];
     if (app && app.estado === 'breve') return null;   /* app que saiu do ar (ex.: Maturidade do Painel MAV) não volta pelo «Continuar» */
-    if (app && app.abre === 'sgo' && u.org) u.url = urlDe(app, u.org) || u.url;   /* endereço guardado antes do D25 segue a forma da visão de agora */
+    if (app && (app.abre === 'sgo' || (app.abre === 'maturidade' && MAT_CASCA)) && u.org) u.url = urlDe(app, u.org) || u.url;   /* endereço guardado antes do D25 segue a forma da visão de agora */
     u.url = comOrigem(u.url);   /* PT26: endereço guardado antes da origem também volta com «‹ Hub» no Manual */
     return u;
   }
@@ -346,6 +364,11 @@
       escolherOrg('Abrir ' + app.nome + ' de qual organização?', 'O app abre com os dados da organização escolhida.', function (id) { abrir(app, id); });
       return;
     }
+    if (app.abre === 'maturidade' && MAT_CASCA) {   /* casca do SGO: sempre de uma organização escolhida (só a equipe vê o botão) */
+      if (perfil.tipo !== 'equipe') return;
+      escolherOrg('Abrir a Maturidade de qual organização?', 'A avaliação abre com a planilha da organização escolhida.', function (id) { abrir(app, id); });
+      return;
+    }
     abrir(app, perfil.tipo === 'org' ? perfil.org : orgEquipe());
   });
 
@@ -419,7 +442,7 @@
   function pintarSair() { $('navSair').hidden = $('betaSair').hidden = !temContaNoAparelho(); $('nav').classList.toggle('com-sair', !$('navSair').hidden); }
   function sair() {
     if (!window.confirm('Sair deste aparelho?\n\nO Hub esquece a conta, as organizações e o último app aberto aqui.')) return;
-    [CH.quem, CH.orgs, CH.perfil, CH.ultimo, CH.orgEquipe].forEach(apagar);
+    [CH.quem, CH.orgs, CH.perfil, CH.ultimo, CH.orgEquipe, CH.state].forEach(apagar);
     try { sessionStorage.clear(); } catch (e) {}
     quem = null; ORGS = SEM_LISTA ? [] : (D.orgs || []); recusado = false; visaoDoLink = false;
     perfil = { tipo: 'org', org: D.padrao || null };
@@ -430,6 +453,7 @@
   $('navSair').addEventListener('click', sair);
   $('betaSair').addEventListener('click', sair);
   $('betaConta').hidden = !PORTEIRO.url;
+  $('betaEquipe').hidden = !!PORTEIRO.url && !ehEquipe;   /* G1: a visão da equipe só vem do Porteiro */
   $('betaConta').addEventListener('click', function () {   /* conta errada escolhida no Google, ou visão vencida: confere de novo */
     apagar(CH.quem); $('dlgBeta').close(); irAoPorteiro();
   });
