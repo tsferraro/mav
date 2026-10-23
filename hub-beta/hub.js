@@ -1,6 +1,6 @@
 /* Hub Mandū · Beta — a lançadora (PT13, PT14 do sig-mandu).
    Quem vê o quê:  ?org=<id>  → tela F da organização (só a dela) · ?equipe=1 → tela G (Painel da equipe).
-   Sem parâmetro, vale o que o aparelho guardou; na 1ª vez, a organização padrão do Beta (Camtauá, D12).
+   Sem parâmetro, vale o que o aparelho guardou; na 1ª vez, a organização padrão (D12); sem lista no HTML (R2), nenhuma: o Porteiro diz qual.
    Persistência no aparelho (tudo em try/catch: navegador privado ou bloqueado não quebra a tela):
      hub_perfil_v1      {tipo:'org'|'equipe', org}       quem está usando este aparelho
      hub_ultimo_v1      {id, nome, url, org, modo, em}    o último app aberto → reabrir o Hub volta a ele
@@ -11,6 +11,8 @@
   'use strict';
   var D = window.HUB_ORGS || { orgs: [], links: {} };
   var ORGS = D.orgs || [];
+  var SEM_LISTA = !!D.semLista;   /* R2 (Beta, CONTRATO-porteiro-v1-lista): o HTML não traz organização; a lista chega só pelo # do Porteiro */
+  var ID_OK = /^[a-z0-9-]{1,60}$/;
   var LINKS = D.links || {};
   var CH = { perfil: 'hub_perfil_v1', ultimo: 'hub_ultimo_v1', orgEquipe: 'hub_org_equipe_v1', auto: 'hub_auto_v1' };
   var ESPERA_MS = 1600;
@@ -24,7 +26,9 @@
   }
   function apagar(chave) { try { localStorage.removeItem(chave); } catch (e) {} }
 
-  function orgPorId(id) { for (var i = 0; i < ORGS.length; i++) if (ORGS[i].id === id) return ORGS[i]; return null; }
+  function orgNaLista(id) { for (var i = 0; i < ORGS.length; i++) if (ORGS[i].id === id) return ORGS[i]; return null; }
+  /* sem lista, um id bem formado vindo do link vale (o SGO confere no servidor); o nome fica em branco até a lista chegar */
+  function orgPorId(id) { return orgNaLista(id) || (SEM_LISTA && ID_OK.test(id || '') ? { id: id, nome: '', grupo: '' } : null); }
   function $(id) { return document.getElementById(id); }
 
   /* ---------- cenas (frações da ilustração; mesmas caixas do montar-hub-v2.py) ---------- */
@@ -47,7 +51,7 @@
     { id: 'links', x: .667, y: 0, w: .333, h: .5, nome: 'Links e QR', estado: 'admin', abre: 'painel', compacto: true },
     { id: 'agenda', x: 0, y: .5, w: .333, h: .5, nome: 'Agenda', estado: 'breve', compacto: true },
     { id: 'cronograma', x: .333, y: .5, w: .334, h: .5, nome: 'Cronograma', estado: 'breve', compacto: true },
-    { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'breve', compacto: true }   /* espera o link da Avaliação de Maturidade da Camtauá; nunca o Painel MAV (PT28) */
+    { id: 'maturidade', x: .667, y: .5, w: .333, h: .5, nome: 'Maturidade', estado: 'breve', compacto: true }   /* D28: sai do Hub; volta pela casca do SGO (PT41), nunca o Painel MAV (PT28) */
   ];
   /* «Maturidade» abre a página da Avaliação só onde o montar.py a pôs (destino /hub/, PT30/D4); no Beta do GitHub fica «em breve» */
   if (LINKS.maturidade) B3.forEach(function (c) { if (c.id === 'maturidade') { c.estado = 'admin'; c.abre = 'maturidade'; } });
@@ -122,10 +126,23 @@
     gravar(CH.quem, { tipo: 'equipe', fonte: 'link', em: '1970-01-01T00:00:00Z' }); apagar(CH.perfil); antigo = null;
   }
   var quem = ler(CH.quem);
+  CH.orgs = 'hub_orgs_v1';   /* {orgs:[{id,nome,grupo}], em} · a lista que o Porteiro mandou pelo # (só id, nome e grupo, D29) */
+  function listaDoHash() {
+    var m = /[#&]hub=([^&]*)/.exec(location.hash || ''), j = null;
+    if (!m) return null;
+    try { j = JSON.parse(decodeURIComponent(m[1])); } catch (e) { return null; }
+    if (!j || j.v !== 1 || !Array.isArray(j.orgs)) return null;
+    return j.orgs.filter(function (o) { return o && ID_OK.test(String(o.id || '')); }).slice(0, 200).map(function (o) {
+      return { id: o.id, nome: String(o.nome || o.id).slice(0, 80), grupo: o.grupo === 'producao' ? 'organizacoes' : 'testes' };
+    });
+  }
   var veioDoPorteiro = params.get('via') === 'porteiro';
   if (veioDoPorteiro) {
     var q = params.get('quem');
-    if (q === 'equipe' || q === 'outro') { quem = { tipo: q, fonte: 'porteiro', em: agora }; gravar(CH.quem, quem); }
+    if (q === 'equipe' || q === 'outro' || q === 'org' || q === 'recusa') {
+      quem = { tipo: q, fonte: 'porteiro', em: agora }; gravar(CH.quem, quem);
+      if (q === 'equipe' || q === 'org') gravar(CH.orgs, { orgs: listaDoHash() || [], em: agora }); else apagar(CH.orgs);
+    }
     else setTimeout(function () { avisar('Não consegui ler a sua conta Google. Abrindo o Hub da organização.'); }, 300);
   } else if (params.get('equipe') === '1') {
     quem = { tipo: 'equipe', fonte: 'link', em: agora }; gravar(CH.quem, quem);   /* o botão «Hub Mandū» do SGO e o Painel mandam assim */
@@ -136,6 +153,8 @@
     var idade = Date.now() - Date.parse(quem.em || 0);
     return idade >= 0 && idade < PORTEIRO.validadeH * 3600e3 ? quem : null;
   }
+
+  if (SEM_LISTA) { var lg = ler(CH.orgs); ORGS = lg && Array.isArray(lg.orgs) && quemValido() ? lg.orgs : []; }
 
   /* ---------- visão (F = organização · G = equipe) ---------- */
   var perfil = null, visaoDoLink = false;
@@ -150,8 +169,13 @@
   }
   if (!perfil) perfil = ler(CH.visao, true);
   if (!perfil && ehEquipe) perfil = { tipo: 'equipe' };
+  var qv = quemValido();
+  if (!perfil && qv && qv.tipo === 'org' && SEM_LISTA)   /* pessoa de organização: a dela (a última escolhida, se ainda for dela) */
+    perfil = { tipo: 'org', org: antigo && orgNaLista(antigo.org) ? antigo.org : (ORGS[0] || {}).id || null };
+  if (!perfil && qv && qv.tipo === 'recusa') perfil = { tipo: 'org', org: null };
   if (!perfil) perfil = antigo;
-  if (!perfil || perfil.tipo !== 'equipe' && !orgPorId(perfil.org)) perfil = { tipo: 'org', org: D.padrao };
+  if (!perfil || perfil.tipo !== 'equipe' && !orgPorId(perfil.org)) perfil = { tipo: 'org', org: D.padrao || null };
+  var recusado = !!(qv && qv.tipo === 'recusa');
 
   /* ---------- Porteiro: aba inteira ao /exec?quem=1 (nunca fetch: o login do Google não tem CORS) ---------- */
   var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
@@ -177,7 +201,10 @@
     if (app.abre === 'sgo') {
       var o = orgPorId(orgId);
       if (!o) return '';
-      var base = perfil.tipo === 'org' && o.sgoCurto ? o.sgoCurto : o.sgo;   /* D25/PT40: cooperado pela forma curta (Gmail entra); equipe pela longa do domínio */
+      var curto = perfil.tipo === 'org';   /* D25/PT40: cooperado pela forma curta (Gmail entra); equipe pela longa do domínio */
+      var base = o.sgo ? (curto && o.sgoCurto ? o.sgoCurto : o.sgo)
+        : D.exec ? (curto ? D.exec.curto : D.exec.longo) + '?org=' + encodeURIComponent(o.id) : '';   /* sem lista: o SGO resolve o ?org= */
+      if (!base) return '';
       return base + (base.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta());
     }
     if (app.abre === 'painel') return D.painel || '';
@@ -190,7 +217,7 @@
     var o = orgPorId(orgId);
     if (app.abre === 'sgo') return app.nome + (o ? ' · ' + o.nome : '');
     if (app.abre === 'painel') return 'Painel da Mandū';
-    if (app.abre === 'maturidade') return 'Maturidade · Camtauá';
+    if (app.abre === 'maturidade') return 'Maturidade';
     return app.nome;
   }
   /* PT26 · o Manual do SGO mostra «‹ Hub Mandū» quando sabe de onde veio (contrato MA-126 do Manual, RETORNO-manual-app.md itens 24–31):
@@ -271,6 +298,8 @@
           '<small>' + esc(o.id === ult ? 'a última que você abriu' : (o.local || o.ambienteTxt || '')) + '</small></button>';
       });
     });
+    if (!h) h = '<p class="dlg-sub">A lista de organizações chega quando você entra com a sua conta Google.</p>' +
+      (PORTEIRO.url ? '<button type="button" class="bt-opcao" data-entrar="1">Entrar com a conta Google</button>' : '');
     $('dlgOrgTitulo').textContent = titulo;
     $('dlgOrgSub').textContent = sub;
     $('dlgOrgLista').innerHTML = h;
@@ -278,8 +307,10 @@
     abrirDialogo($('dlgOrg'));
   }
   $('dlgOrgLista').addEventListener('click', function (ev) {
+    if (ev.target.closest('[data-entrar]')) { $('dlgOrg').close(); irAoPorteiro(); return; }
     var b = ev.target.closest('[data-org]'); if (!b) return;
     var id = b.getAttribute('data-org');
+    if (perfil.tipo === 'org') { perfil = { tipo: 'org', org: id }; gravar(CH.perfil, perfil); $('dlgOrg').close(); pintarTudo(); return; }   /* pessoa de N organizações */
     gravar(CH.orgEquipe, id);
     $('dlgOrg').close();
     pintarTopo();
@@ -293,6 +324,10 @@
     var app = APPS[b.getAttribute('data-app')]; if (!app) return;
     if (app.estado === 'breve') { avisar('«' + app.nome + '» chega em breve no Hub.'); return; }
     if (app.abre === 'sgo') {
+      if (perfil.tipo === 'org' && !perfil.org) {   /* sem organização (sem lista, sem link, ou conta recusada) */
+        if (PORTEIRO.url) irAoPorteiro(); else avisar('Abra o Hub pelo link da sua organização.');
+        return;
+      }
       if (perfil.tipo === 'org') { abrir(app, perfil.org); return; }
       escolherOrg('Abrir ' + app.nome + ' de qual organização?', 'O app abre com os dados da organização escolhida.', function (id) { abrir(app, id); });
       return;
@@ -314,13 +349,15 @@
     if (eq) {
       var o = orgPorId(orgEquipe());
       $('topoTitulo').textContent = 'Painel da equipe';
-      $('topoSub').textContent = o ? 'Mandū · vendo a ' + o.nome : 'Mandū · todas as organizações';
+      $('topoSub').textContent = o && o.nome ? 'Mandū · vendo a ' + o.nome : 'Mandū · todas as organizações';
     } else {
       var org = orgPorId(perfil.org);
-      $('topoTitulo').textContent = org ? org.nome : 'Hub Mandū';
-      $('topoSub').textContent = 'Os apps da sua organização';
+      $('topoTitulo').textContent = org && org.nome ? org.nome : 'Hub Mandū';
+      $('topoSub').textContent = org ? 'Os apps da sua organização'
+        : recusado ? 'Esta conta Google não tem acesso a nenhuma organização. Peça acesso a quem cuida da sua organização ou entre com outra conta.'
+        : PORTEIRO.url ? 'Entre com a sua conta Google para ver a sua organização.' : 'Abra o Hub pelo link da sua organização.';
     }
-    $('btTrocar').hidden = !eq;
+    $('btTrocar').hidden = !eq && !(perfil.tipo === 'org' && ORGS.length > 1 && orgNaLista(perfil.org));   /* pessoa de N organizações também troca */
     $('admin').hidden = !eq;
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', eq ? '#FF6E00' : '#005A50');
