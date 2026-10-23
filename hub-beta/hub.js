@@ -176,7 +176,9 @@
   function urlDe(app, orgId) {
     if (app.abre === 'sgo') {
       var o = orgPorId(orgId);
-      return o ? o.sgo + (o.sgo.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta()) : '';
+      if (!o) return '';
+      var base = perfil.tipo === 'org' && o.sgoCurto ? o.sgoCurto : o.sgo;   /* D25/PT40: cooperado pela forma curta (Gmail entra); equipe pela longa do domínio */
+      return base + (base.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta());
     }
     if (app.abre === 'painel') return D.painel || '';
     if (app.abre === 'maturidade') return LINKS.maturidade || '';
@@ -215,6 +217,7 @@
     if (perfil.tipo === 'org' && u.org && u.org !== perfil.org) return null;
     var app = APPS[u.id];
     if (app && app.estado === 'breve') return null;   /* app que saiu do ar (ex.: Maturidade do Painel MAV) não volta pelo «Continuar» */
+    if (app && app.abre === 'sgo' && u.org) u.url = urlDe(app, u.org) || u.url;   /* endereço guardado antes do D25 segue a forma da visão de agora */
     u.url = comOrigem(u.url);   /* PT26: endereço guardado antes da origem também volta com «‹ Hub» no Manual */
     return u;
   }
