@@ -106,20 +106,68 @@
   var APPS = {};
   B1.concat(B2, B3).forEach(function (c) { APPS[c.id] = c; });
 
-  /* ---------- perfil ---------- */
+  /* ---------- quem é (PT31 · Porteiro mínimo, 1ª fatia da onda A da Plataforma, D15) ----------
+     hub_quem_v1  {tipo:'equipe'|'outro', fonte:'porteiro'|'link', em}  quem usa o aparelho; vale PORTEIRO.validadeH horas
+     (sessão) hub_visao_v1     a visão trocada no «Beta»: só nesta aba (a equipe volta à tela da equipe na próxima abertura)
+     (sessão) hub_porteiro_v1  já foi ao Porteiro nesta aba: não vai de novo (sem laço)
+     Volta do Porteiro: ?via=porteiro&quem=equipe|outro|vazio. «outro» = não é equipe, NÃO quer dizer «é desta organização»
+     (a organização certa e a recusa chegam com o índice pessoa → organização, A2/A3). «vazio» não grava nada.
+     Com o Porteiro desligado (url vazia no montar.py), tudo vale como antes: a identidade não vence. */
+  var PORTEIRO = D.porteiro || { url: '', validadeH: 24, instalado: 'auto' };
+  CH.quem = 'hub_quem_v1'; CH.visao = 'hub_visao_v1'; CH.porteiro = 'hub_porteiro_v1';
   var params = new URLSearchParams(location.search);
-  var perfil = ler(CH.perfil) || null;
-  if (params.get('equipe') === '1') perfil = { tipo: 'equipe' };
-  else if (params.get('org')) {
-    if (orgPorId(params.get('org'))) perfil = { tipo: 'org', org: params.get('org') };
-    else setTimeout(function () { avisar('Não achei essa organização no Hub. Abrindo a padrão.'); }, 300);
+  var agora = new Date().toISOString();
+  var antigo = ler(CH.perfil);
+  if (antigo && antigo.tipo === 'equipe') {   /* aparelho de antes do Porteiro: equipe guardada vira identidade «link» sem data (vence na 1ª abertura com o Porteiro ligado) */
+    gravar(CH.quem, { tipo: 'equipe', fonte: 'link', em: '1970-01-01T00:00:00Z' }); apagar(CH.perfil); antigo = null;
   }
-  if (!perfil || (perfil.tipo === 'org' && !orgPorId(perfil.org))) perfil = { tipo: 'org', org: D.padrao };
-  gravar(CH.perfil, perfil);
+  var quem = ler(CH.quem);
+  var veioDoPorteiro = params.get('via') === 'porteiro';
+  if (veioDoPorteiro) {
+    var q = params.get('quem');
+    if (q === 'equipe' || q === 'outro') { quem = { tipo: q, fonte: 'porteiro', em: agora }; gravar(CH.quem, quem); }
+    else setTimeout(function () { avisar('Não consegui ler a sua conta Google. Abrindo o Hub da organização.'); }, 300);
+  } else if (params.get('equipe') === '1') {
+    quem = { tipo: 'equipe', fonte: 'link', em: agora }; gravar(CH.quem, quem);   /* o botão «Hub Mandū» do SGO e o Painel mandam assim */
+  }
+  function quemValido() {
+    if (!quem || !quem.tipo) return null;
+    if (!PORTEIRO.url) return quem;   /* desligado: como antes, o guardado não vence */
+    var idade = Date.now() - Date.parse(quem.em || 0);
+    return idade >= 0 && idade < PORTEIRO.validadeH * 3600e3 ? quem : null;
+  }
+
+  /* ---------- visão (F = organização · G = equipe) ---------- */
+  var perfil = null, visaoDoLink = false;
+  var ehEquipe = quemValido() && quemValido().tipo === 'equipe';
+  if (params.get('equipe') === '1') { perfil = { tipo: 'equipe' }; visaoDoLink = true; }
+  else if (params.get('org')) {
+    if (orgPorId(params.get('org'))) {
+      perfil = { tipo: 'org', org: params.get('org') }; visaoDoLink = true;
+      if (ehEquipe) gravar(CH.visao, perfil, true);   /* equipe abrindo o link de uma organização: só nesta aba */
+      else gravar(CH.perfil, perfil);
+    } else setTimeout(function () { avisar('Não achei essa organização no Hub. Abrindo a padrão.'); }, 300);
+  }
+  if (!perfil) perfil = ler(CH.visao, true);
+  if (!perfil && ehEquipe) perfil = { tipo: 'equipe' };
+  if (!perfil) perfil = antigo;
+  if (!perfil || perfil.tipo !== 'equipe' && !orgPorId(perfil.org)) perfil = { tipo: 'org', org: D.padrao };
+
+  /* ---------- Porteiro: aba inteira ao /exec?quem=1 (nunca fetch: o login do Google não tem CORS) ---------- */
+  var instalado = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  function urlPorteiro() { return PORTEIRO.url + '&volta=' + encodeURIComponent(location.origin + location.pathname); }
+  function irAoPorteiro() {
+    gravar(CH.porteiro, 1, true);
+    mostrarAbrindo('Conferindo a sua conta Google');
+    location.replace(urlPorteiro());
+  }
+  var indoAoPorteiro = !!PORTEIRO.url && !params.get('equipe') && !params.get('org') && !veioDoPorteiro &&
+    !quemValido() && !ler(CH.porteiro, true) && !(instalado && PORTEIRO.instalado === 'botao');
 
   function orgEquipe() { var id = ler(CH.orgEquipe); return orgPorId(id) ? id : null; }
 
-  function enderecoLimpo() {
+  function enderecoLimpo() {   /* a visão que veio da conta não vai para o endereço: recarregar não pode virar «link» */
+    if (!visaoDoLink) return location.pathname + (params.get('hub') === '1' ? '?hub=1' : '');
     return location.pathname + (perfil.tipo === 'equipe' ? '?equipe=1' : '?org=' + encodeURIComponent(perfil.org));
   }
   function hubVolta() { return location.origin + location.pathname + '?hub=1'; }
@@ -303,13 +351,18 @@
     $('betaUltimo').textContent = u && u.nome ? 'guardado: ' + u.nome : 'nenhum guardado';
     abrirDialogo($('dlgBeta'));
   });
+  /* «ver como os outros veem» (PT27) vale só nesta aba: a próxima abertura volta à visão de quem é (PT31) */
   $('betaOrg').addEventListener('click', function () {
-    perfil = { tipo: 'org', org: perfil.tipo === 'org' ? perfil.org : D.padrao };
-    gravar(CH.perfil, perfil); $('dlgBeta').close(); pintarTudo(); window.scrollTo(0, 0);
+    perfil = { tipo: 'org', org: perfil.tipo === 'org' ? perfil.org : D.padrao }; visaoDoLink = false;
+    gravar(CH.visao, perfil, true); $('dlgBeta').close(); pintarTudo(); window.scrollTo(0, 0);
   });
   $('betaEquipe').addEventListener('click', function () {
-    perfil = { tipo: 'equipe' };
-    gravar(CH.perfil, perfil); $('dlgBeta').close(); pintarTudo(); window.scrollTo(0, 0);
+    perfil = { tipo: 'equipe' }; visaoDoLink = false;
+    gravar(CH.visao, perfil, true); $('dlgBeta').close(); pintarTudo(); window.scrollTo(0, 0);
+  });
+  $('betaConta').hidden = !PORTEIRO.url;
+  $('betaConta').addEventListener('click', function () {   /* conta errada escolhida no Google, ou visão vencida: confere de novo */
+    apagar(CH.quem); $('dlgBeta').close(); irAoPorteiro();
   });
   $('betaEsquecer').addEventListener('click', function () {
     apagar(CH.ultimo); $('dlgBeta').close(); pintarContinuar(); avisar('Pronto: o Hub não volta mais sozinho a um app.');
@@ -324,8 +377,8 @@
   if (mqLargo.addEventListener) mqLargo.addEventListener('change', aoMudarLargura);
   else if (mqLargo.addListener) mqLargo.addListener(aoMudarLargura);
 
-  pintarTudo();
-  talvezVoltarSozinho();
+  if (indoAoPorteiro) irAoPorteiro();
+  else { pintarTudo(); talvezVoltarSozinho(); }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
