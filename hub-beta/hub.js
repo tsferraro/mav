@@ -149,7 +149,9 @@
   var stateGuardado = stGuardado && stIdade >= 0 && stIdade < STATE_MIN * 60e3 ? stGuardado.s : null;
   if (params.get('via') === 'porteiro' || (stGuardado && !stateGuardado)) apagar(CH.state);
   var veioDoPorteiro = params.get('via') === 'porteiro' && !!stateGuardado && params.get('state') === stateGuardado;
-  if (params.get('via') === 'porteiro' && !veioDoPorteiro) setTimeout(function () { avisar('Este endereço não veio da sua entrada no Google. Nada mudou neste aparelho.'); }, 300);
+  /* H10-778: o motivo de não ter conta fica escrito na faixa de conta (antes, só num aviso de 2,6 s) */
+  var motivoSemConta = '';
+  if (params.get('via') === 'porteiro' && !veioDoPorteiro) motivoSemConta = 'Não consegui confirmar a sua conta nesta janela. Nada mudou neste aparelho.';
   if (veioDoPorteiro) {
     var q = params.get('quem');
     if (q === 'equipe' || q === 'outro' || q === 'org' || q === 'recusa') {
@@ -159,7 +161,7 @@
       if (q === 'equipe' || q === 'org') { gravar(CH.quem, quem); gravar(CH.orgs, { orgs: listaDoHash() || [], em: agora }); }
       else { apagar(CH.quem); apagar(CH.orgs); }
     }
-    else setTimeout(function () { avisar('Não consegui ler a sua conta Google. Abrindo o Hub da organização.'); }, 300);
+    else motivoSemConta = 'Não consegui ler a sua conta Google.';
   } else if (params.get('equipe') === '1' && !PORTEIRO.url) {
     quem = { tipo: 'equipe', fonte: 'link', em: agora }; gravar(CH.quem, quem);   /* Porteiro desligado: o botão «Hub Mandū» do SGO e o Painel mandam assim */
   }
@@ -360,7 +362,9 @@
     if (app.estado === 'breve') { avisar('«' + app.nome + '» chega em breve no Hub.'); return; }
     if (app.abre === 'sgo') {
       if (perfil.tipo === 'org' && !perfil.org) {   /* sem organização (sem lista, sem link, ou conta recusada) */
-        if (PORTEIRO.url) irAoPorteiro(); else avisar('Abra o Hub pelo link da sua organização.');
+        /* H10-778: recusada, o Porteiro daria a mesma resposta (laço): aponta a faixa com «Entrar com outra conta» */
+        if (recusado) { avisar('Esta conta Google não tem acesso a nenhuma organização. Toque em «Entrar com outra conta».', 6000); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        else if (PORTEIRO.url) irAoPorteiro(); else avisar('Abra o Hub pelo link da sua organização.');
         return;
       }
       if (perfil.tipo === 'org') { abrir(app, perfil.org); return; }
@@ -393,9 +397,18 @@
     } else {
       var org = orgPorId(perfil.org);
       $('topoTitulo').textContent = org && org.nome ? org.nome : 'Hub Mandū';
-      $('topoSub').textContent = org ? 'Os apps da sua organização'
-        : recusado ? 'Esta conta Google não tem acesso a nenhuma organização. Peça acesso a quem cuida da sua organização ou entre com outra conta.'
-        : PORTEIRO.url ? 'Entre com a sua conta Google para ver a sua organização.' : 'Abra o Hub pelo link da sua organização.';
+      $('topoSub').textContent = org ? 'Os apps da sua organização' : recusado ? 'Sem acesso com esta conta' : 'Entre para ver a sua organização';
+    }
+    /* H10-778: sem organização, a faixa de conta diz o porquê inteiro (o topoSub corta em 1 linha) e dá o botão */
+    var semOrg = !eq && !orgPorId(perfil.org);
+    $('faixaConta').hidden = !semOrg;
+    if (semOrg) {
+      $('contaMsg').textContent = recusado
+        ? 'Esta conta Google não tem acesso a nenhuma organização. Peça acesso a quem cuida da sua organização ou entre com outra conta.'
+        : PORTEIRO.url ? (motivoSemConta ? motivoSemConta + ' ' : '') + 'Entre com a sua conta Google para ver a sua organização.'
+        : 'Abra o Hub pelo link da sua organização.';
+      $('btConta').hidden = !PORTEIRO.url;
+      $('btConta').textContent = recusado ? 'Entrar com outra conta' : 'Entrar com a conta Google';
     }
     $('btTrocar').hidden = !eq && !(perfil.tipo === 'org' && ORGS.length > 1 && orgNaLista(perfil.org));   /* pessoa de N organizações também troca */
     $('admin').hidden = !eq;
@@ -456,6 +469,15 @@
   $('navSair').addEventListener('click', sair);
   $('betaSair').addEventListener('click', sair);
   $('betaConta').hidden = !PORTEIRO.url;
+  /* «Entrar com outra conta» (contrato v1): na recusa, vai à escolha de conta do Google e dali ao Porteiro, com state novo —
+     o mesmo caminho do «Usar outra conta» do Porteiro, um toque a menos; sem recusa, vai ao Porteiro */
+  $('btConta').addEventListener('click', function () {
+    if (!recusado) { irAoPorteiro(); return; }
+    var st = sortearState();
+    gravar(CH.state, { s: st, em: new Date().toISOString() }); gravar(CH.porteiro, 1, true);
+    mostrarAbrindo('Escolher outra conta Google');
+    location.assign('https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(urlPorteiro(st)));
+  });
   $('betaEquipe').hidden = !!PORTEIRO.url && !ehEquipe;   /* G1: a visão da equipe só vem do Porteiro */
   $('betaConta').addEventListener('click', function () {   /* conta errada escolhida no Google, ou visão vencida: confere de novo */
     apagar(CH.quem); $('dlgBeta').close(); irAoPorteiro();
