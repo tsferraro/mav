@@ -226,11 +226,14 @@
     location.assign(urlPorteiro(st, longa));   /* assign, não replace: o «Voltar» de uma página de erro do Google volta ao Hub */
   }
   /* voltou do Google sem terminar (erro do Google, «Voltar»): a aba já foi ao Porteiro e não vai sozinha de novo — diz o porquê */
-  if (PORTEIRO.url && !motivoSemConta && !veioDoPorteiro && ler(CH.porteiro, true) && !quemValido())
-    motivoSemConta = 'A entrada pelo Google não terminou nesta janela.';
+  /* ida ao Google que começou há menos de STATE_MIN e não voltou (página de erro do Google, ou parou no meio): reabrir o Hub, em
+     qualquer aba, não vai sozinho de novo — o Chrome pula no «Voltar» a página que navegou sem toque, então o aviso fica aqui */
+  var tentativaPendente = !!stateGuardado && params.get('via') !== 'porteiro';
+  if (PORTEIRO.url && !motivoSemConta && !veioDoPorteiro && (ler(CH.porteiro, true) || tentativaPendente) && !quemValido())
+    motivoSemConta = 'A entrada pelo Google não terminou.';
   /* `?equipe=1` com o Porteiro ligado não segura mais o Hub (G1); volta do Porteiro que não bateu não vai de novo (sem laço) */
   var indoAoPorteiro = !!PORTEIRO.url && !params.get('org') && !veioDoPorteiro && params.get('via') !== 'porteiro' &&
-    !quemValido() && !ler(CH.porteiro, true) && !(instalado && PORTEIRO.instalado === 'botao');
+    !quemValido() && !ler(CH.porteiro, true) && !tentativaPendente && !(instalado && PORTEIRO.instalado === 'botao');
 
   function orgEquipe() { var id = ler(CH.orgEquipe); return orgPorId(id) ? id : null; }
 
@@ -503,7 +506,7 @@
   window.addEventListener('pageshow', function (ev) {
     if (!ev.persisted) return;
     cancelarVolta(); pintarContinuar();
-    if (PORTEIRO.url && !quemValido()) { motivoSemConta = motivoSemConta || 'A entrada pelo Google não terminou nesta janela.'; pintarTudo(); }   /* «Voltar» do Google pelo cache da página */
+    if (PORTEIRO.url && !quemValido()) { motivoSemConta = motivoSemConta || 'A entrada pelo Google não terminou.'; pintarTudo(); }   /* «Voltar» do Google pelo cache da página */
   });
   window.addEventListener('pagehide', function () { if (timerVolta) cancelarVolta(); });
 
