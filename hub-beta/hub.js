@@ -209,14 +209,25 @@
     for (var j = 0; j < a.length; j++) t += ('0' + a[j].toString(16)).slice(-2);
     return t;
   }
-  function urlPorteiro(st) { return PORTEIRO.url + '&volta=' + encodeURIComponent(location.origin + location.pathname) + '&state=' + st; }
-  function irAoPorteiro() {
+  /* H10-779: Porteiro pela forma curta (o Gmail entra) e pela longa para quem é da equipe — a curta cai em «Page introuvable»
+     com 2 contas Google no navegador. `?equipe=1` só escolhe o endereço: quem diz que é da equipe continua sendo o Porteiro (G1). */
+  function porteiroLongo() {
+    return !!PORTEIRO.urlLonga && (params.get('equipe') === '1' || !!(quem && quem.tipo === 'equipe') || !!ler(CH.orgEquipe));
+  }
+  function urlPorteiro(st, longa) {
+    return ((longa || porteiroLongo()) ? PORTEIRO.urlLonga : PORTEIRO.url) +
+      '&volta=' + encodeURIComponent(location.origin + location.pathname) + '&state=' + st;
+  }
+  function irAoPorteiro(longa) {
     var st = sortearState();
     gravar(CH.state, { s: st, em: new Date().toISOString() });
     gravar(CH.porteiro, 1, true);
     mostrarAbrindo('Conferindo a sua conta Google');
-    location.replace(urlPorteiro(st));
+    location.assign(urlPorteiro(st, longa));   /* assign, não replace: o «Voltar» de uma página de erro do Google volta ao Hub */
   }
+  /* voltou do Google sem terminar (erro do Google, «Voltar»): a aba já foi ao Porteiro e não vai sozinha de novo — diz o porquê */
+  if (PORTEIRO.url && !motivoSemConta && !veioDoPorteiro && ler(CH.porteiro, true) && !quemValido())
+    motivoSemConta = 'A entrada pelo Google não terminou nesta janela.';
   /* `?equipe=1` com o Porteiro ligado não segura mais o Hub (G1); volta do Porteiro que não bateu não vai de novo (sem laço) */
   var indoAoPorteiro = !!PORTEIRO.url && !params.get('org') && !veioDoPorteiro && params.get('via') !== 'porteiro' &&
     !quemValido() && !ler(CH.porteiro, true) && !(instalado && PORTEIRO.instalado === 'botao');
@@ -408,6 +419,7 @@
         : PORTEIRO.url ? (motivoSemConta ? motivoSemConta + ' ' : '') + 'Entre com a sua conta Google para ver a sua organização.'
         : 'Abra o Hub pelo link da sua organização.';
       $('btConta').hidden = !PORTEIRO.url;
+      $('btContaEquipe').hidden = !PORTEIRO.urlLonga;
       $('btConta').textContent = recusado ? 'Entrar com outra conta' : 'Entrar com a conta Google';
     }
     $('btTrocar').hidden = !eq && !(perfil.tipo === 'org' && ORGS.length > 1 && orgNaLista(perfil.org));   /* pessoa de N organizações também troca */
@@ -478,6 +490,7 @@
     mostrarAbrindo('Escolher outra conta Google');
     location.assign('https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(urlPorteiro(st)));
   });
+  $('btContaEquipe').addEventListener('click', function () { irAoPorteiro(true); });
   $('betaEquipe').hidden = !!PORTEIRO.url && !ehEquipe;   /* G1: a visão da equipe só vem do Porteiro */
   $('betaConta').addEventListener('click', function () {   /* conta errada escolhida no Google, ou visão vencida: confere de novo */
     apagar(CH.quem); $('dlgBeta').close(); irAoPorteiro();
@@ -487,7 +500,11 @@
   });
 
   /* voltar pelo «Voltar» do navegador traz a página do cache: nunca reabrir o app por cima */
-  window.addEventListener('pageshow', function (ev) { if (ev.persisted) { cancelarVolta(); pintarContinuar(); } });
+  window.addEventListener('pageshow', function (ev) {
+    if (!ev.persisted) return;
+    cancelarVolta(); pintarContinuar();
+    if (PORTEIRO.url && !quemValido()) { motivoSemConta = motivoSemConta || 'A entrada pelo Google não terminou nesta janela.'; pintarTudo(); }   /* «Voltar» do Google pelo cache da página */
+  });
   window.addEventListener('pagehide', function () { if (timerVolta) cancelarVolta(); });
 
   /* a janela passou do limite do computador (ou voltou): troca ilustração e caixas, sem recarregar */

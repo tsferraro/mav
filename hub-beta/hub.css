@@ -37,6 +37,8 @@ button { font: inherit; color: inherit; }
 .faixa-conta { background: var(--barra); color: #FFFFFF; padding: 0 16px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .faixa-conta[hidden] { display: none; }
 .faixa-conta p { margin: 0; font-size: 15px; line-height: 1.35; flex: 1 1 260px; }
+.bt-conta-sec { background: transparent; color: #FFFFFF; border: 2px solid rgba(255,255,255,.7); }
+.bt-conta[hidden] { display: none; }
 .bt-conta { touch-action: manipulation; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 0; background: #FFFFFF; color: var(--verde-esc); font-weight: 700; cursor: pointer; }
 .continuar { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px 6px 14px; background: var(--creme); color: var(--tinta); text-decoration: none; border-radius: 14px; }
 .continuar:focus-visible { outline: 3px solid var(--laranja); outline-offset: 2px; }
