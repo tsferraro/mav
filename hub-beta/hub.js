@@ -484,14 +484,17 @@
   $('navSair').addEventListener('click', sair);
   $('betaSair').addEventListener('click', sair);
   $('betaConta').hidden = !PORTEIRO.url;
-  /* «Entrar com outra conta» (contrato v1): na recusa, vai à escolha de conta do Google e dali ao Porteiro, com state novo —
-     o mesmo caminho do «Usar outra conta» do Porteiro, um toque a menos; sem recusa, vai ao Porteiro */
+  /* «Entrar com outra conta» (contrato v1). H10-788: a escolha de conta do Google deixa 2 contas na janela, e a forma curta do
+     Porteiro cai em «Page introuvable» com 2 contas (`authuser=1`). Por isso: sair das contas Google desta janela e entrar com
+     UMA, e só então o Porteiro (Logout → ServiceLogin → Porteiro, com state novo; medido 26/10: o Google mantém volta e state) */
   $('btConta').addEventListener('click', function () {
     if (!recusado) { irAoPorteiro(); return; }
+    if (!window.confirm('Entrar com outra conta?\n\nO Google vai sair das contas abertas neste navegador e pedir para você entrar de novo. Entre só com a conta da sua organização.')) return;
     var st = sortearState();
     gravar(CH.state, { s: st, em: new Date().toISOString() }); gravar(CH.porteiro, 1, true);
-    mostrarAbrindo('Escolher outra conta Google');
-    location.assign('https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(urlPorteiro(st)));
+    mostrarAbrindo('Trocando de conta Google');
+    location.assign('https://accounts.google.com/Logout?continue=' +
+      encodeURIComponent('https://accounts.google.com/ServiceLogin?continue=' + encodeURIComponent(urlPorteiro(st))));
   });
   $('btContaEquipe').addEventListener('click', function () { irAoPorteiro(true); });
   $('betaEquipe').hidden = !!PORTEIRO.url && !ehEquipe;   /* G1: a visão da equipe só vem do Porteiro */
