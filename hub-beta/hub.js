@@ -254,7 +254,7 @@
       if (!base) return '';
       return base + (base.indexOf('?') < 0 ? '?' : '&') + 'hub=' + encodeURIComponent(hubVolta());
     }
-    if (app.abre === 'painel') return D.painel || '';
+    if (app.abre === 'painel') return D.painel ? D.painel + '&hub=' + encodeURIComponent(hubVolta()) : '';   /* H10-795: o Painel volta a este Hub */
     if (app.abre === 'maturidade') {
       if (!MAT_CASCA) return LINKS.maturidade || '';
       if (!orgPorId(orgId)) return '';
@@ -423,7 +423,7 @@
         : 'Abra o Hub pelo link da sua organização.';
       $('btConta').hidden = !PORTEIRO.url;
       $('btContaEquipe').hidden = !PORTEIRO.urlLonga;
-      $('btConta').textContent = recusado ? 'Entrar com outra conta' : 'Entrar com a conta Google';
+      $('btConta').textContent = trocaConta() ? 'Entrar com outra conta' : 'Entrar com a conta Google';
     }
     $('btTrocar').hidden = !eq && !(perfil.tipo === 'org' && ORGS.length > 1 && orgNaLista(perfil.org));   /* pessoa de N organizações também troca */
     $('admin').hidden = !eq;
@@ -487,8 +487,11 @@
   /* «Entrar com outra conta» (contrato v1). H10-788: a escolha de conta do Google deixa 2 contas na janela, e a forma curta do
      Porteiro cai em «Page introuvable» com 2 contas (`authuser=1`). Por isso: sair das contas Google desta janela e entrar com
      UMA, e só então o Porteiro (Logout → ServiceLogin → Porteiro, com state novo; medido 26/10: o Google mantém volta e state) */
+  /* H10-799: depois de uma entrada pelo Google que não terminou (página de erro do Google: 2 contas na janela), a saída também é
+     trocar de conta — o Google erra antes do Porteiro, então nenhum botão nosso aparece lá */
+  function trocaConta() { return recusado || !!motivoSemConta; }
   $('btConta').addEventListener('click', function () {
-    if (!recusado) { irAoPorteiro(); return; }
+    if (!trocaConta()) { irAoPorteiro(); return; }
     if (!window.confirm('Entrar com outra conta?\n\nO Google vai sair das contas abertas neste navegador e pedir para você entrar de novo. Entre só com a conta da sua organização.')) return;
     var st = sortearState();
     gravar(CH.state, { s: st, em: new Date().toISOString() }); gravar(CH.porteiro, 1, true);
